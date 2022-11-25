@@ -1,0 +1,77 @@
+C51 COMPILER V9.54   MAIN                                                                  11/24/2022 00:31:04 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: F:\keil5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.l
+                    -st) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <REGX51.H>
+   2          #include "Delay.h"
+   3          #include "MatrixKey.h"
+   4          #include "display.h"
+   5          #define W 2222  //正确的密码设置在这里
+   6          unsigned char keynum;
+   7          unsigned int password;
+   8          //基于译码器的密码锁设计 密码锁只能输入1~9  1~9之外的按键为确定键
+   9          //该单片机最后一列是坏的
+  10          void main()
+  11          {
+  12   1        unsigned int pos = 1;
+  13   1        unsigned int cnt = 0;
+  14   1        while(1)
+  15   1        {
+  16   2          keynum = MatrixKey();
+  17   2          if(keynum)
+  18   2          {
+  19   3            if(keynum>=10) keynum = 0;
+  20   3            if(cnt<4)
+  21   3              {
+  22   4                password *= 10;       //生成相应的密码按键
+  23   4                password += keynum;
+  24   4                display(pos,keynum);
+  25   4                pos++;
+  26   4                cnt++;
+  27   4              }
+  28   3            else
+  29   3              {
+  30   4                if(keynum == 0)   //1~9之外的密按键表示确定密码
+  31   4                {
+  32   5                  if(password == W)
+  33   5                  {
+  34   6                    display(7,10);//数码管显示A表示正确
+  35   6                    password = 0;
+  36   6                    cnt = 0;
+  37   6                    pos = 1;
+  38   6                  }
+  39   5                  else
+  40   5                  {
+  41   6                    display(8,15);//数码管显示F表示错误
+  42   6                    password = 0;
+  43   6                    cnt = 0;
+  44   6                    pos = 1;
+  45   6                  }
+  46   5                }
+  47   4              }
+  48   3          } 
+  49   2        }
+  50   1        
+  51   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+C51 COMPILER V9.54   MAIN                                                                  11/24/2022 00:31:04 PAGE 2   
+
+   CODE SIZE        =    154    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
