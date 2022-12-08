@@ -1,4 +1,4 @@
-C51 COMPILER V9.54   DS1302                                                                12/03/2022 01:20:02 PAGE 1   
+C51 COMPILER V9.54   DS1302                                                                12/09/2022 01:14:51 PAGE 1   
 
 
 C51 COMPILER V9.54, COMPILATION OF MODULE DS1302
@@ -14,71 +14,105 @@ line level    source
    4          sbit DS1302_IO = P3^4;
    5          sbit DS1302_CE = P3^5;
    6          
-   7          void DS1302_Init()
-   8          {
-   9   1        DS1302_CE = 0;
-  10   1        DS1302_SCLK = 0;
-  11   1      }
-  12          
-  13          void DS1302_WriteByte(unsigned char Command,unsigned char Data)
-  14          {
-  15   1        unsigned char i;
-  16   1        DS1302_CE = 1; //这个必须不放在第一句。。。很离谱
-  17   1        for( i = 0; i < 8; ++i )
-  18   1        { 
-  19   2          DS1302_IO = Command << i & 1;
-  20   2          DS1302_SCLK = 1;
-  21   2          DS1302_SCLK = 0;
-  22   2        }
-  23   1        for( i = 0; i < 8; ++i )
-  24   1        { 
-  25   2          DS1302_IO = Data << i & 1;
-  26   2          DS1302_SCLK = 1;
-  27   2          DS1302_SCLK = 0;
-  28   2        }
-  29   1        DS1302_CE = 0;
-  30   1      }
-  31          
-  32          unsigned char DS1302_ReadByte(unsigned char Command)
-  33          {
-  34   1        unsigned char i = 0,Data = 0x00;
-  35   1        Command |= 0x01; //将指令转换为读指令
-  36   1        DS1302_CE = 1;//这个必须不放在第一句。。。很离谱
-  37   1        for( i = 0; i < 8; ++i )
-  38   1        { 
-  39   2          DS1302_IO = Command << i & 1;
-  40   2          DS1302_SCLK = 0;
-  41   2          DS1302_SCLK = 1;
-  42   2        }
-  43   1        for( i = 0; i < 8; ++i)
-  44   1        {
-  45   2          DS1302_SCLK = 1;
-  46   2          DS1302_SCLK = 0;
-  47   2          if(DS1302_IO)
-  48   2          {
-  49   3            Data = Data || (0x01 << i);
-  50   3          }
-  51   2        }
-  52   1        DS1302_CE = 0;
-  53   1        DS1302_IO = 0;  //读取后的IO必须为0要不会出问题
-  54   1        while(1)
-C51 COMPILER V9.54   DS1302                                                                12/03/2022 01:20:02 PAGE 2   
+   7          #define DS1302_SECOND 0x80
+   8          #define DS1302_MINUTE 0x82
+   9          #define DS1302_HOUR   0x84
+  10          #define DS1302_DATE   0x86
+  11          #define DS1302_MONTH  0x88
+  12          #define DS1302_DAY    0x8A
+  13          #define DS1302_YEAR   0x8C
+  14          #define DS1302_WP     0x8E
+  15          
+  16          unsigned char DS1302_TIME[] = {22,12,9,1,12,55,5};
+  17          
+  18          void DS1302_Init()
+  19          {
+  20   1        DS1302_CE = 0;
+  21   1        DS1302_SCLK = 0;
+  22   1      }
+  23          
+  24          void DS1302_WriteByte(unsigned char Command,unsigned char Data)
+  25          {
+  26   1        unsigned char i;
+  27   1        DS1302_CE = 1; //这个必须不放在第一句。。。很离谱
+  28   1        for( i = 0; i < 8; ++i )
+  29   1        { 
+  30   2          DS1302_IO = Command&(0x01<<i);
+  31   2          DS1302_SCLK = 1;
+  32   2          DS1302_SCLK = 0;
+  33   2        }
+  34   1        for( i = 0; i < 8; ++i )
+  35   1        { 
+  36   2          DS1302_IO = Data&(0x01<<i);
+  37   2          DS1302_SCLK = 1;
+  38   2          DS1302_SCLK = 0;
+  39   2        }
+  40   1        DS1302_CE = 0;
+  41   1      }
+  42          
+  43          unsigned char DS1302_ReadByte(unsigned char Command)
+  44          {
+  45   1        unsigned char i,Data = 0x00;
+  46   1        Command |= 0x01; //将指令转换为读指令
+  47   1        DS1302_CE = 1;//这个必须不放在第一句。。。很离谱
+  48   1        for( i = 0; i < 8; ++i )
+  49   1        { 
+  50   2          
+  51   2          DS1302_IO = Command >> i & 1;
+  52   2        //DS1302_IO = Command&(0x01<<i);  //Command<<i&1方向错误debug了半天 应该是右移 
+  53   2          DS1302_SCLK = 0;
+  54   2          DS1302_SCLK = 1;
+C51 COMPILER V9.54   DS1302                                                                12/09/2022 01:14:51 PAGE 2   
 
-  55   1          LCD_ShowNum(2,1,(int)Data,3);
-  56   1        return Data;
-  57   1      }
-*** WARNING C294 IN LINE 56 OF DS1302.c: unreachable code
+  55   2        }
+  56   1        for( i = 0; i < 8; ++i)
+  57   1        {
+  58   2          DS1302_SCLK = 1;
+  59   2          DS1302_SCLK = 0;
+  60   2          if(DS1302_IO)
+  61   2          {
+  62   3            Data |= (0x01 << i); //这里不能是Data = Data|| (0x01<<i) 应该是|
+  63   3          }
+  64   2        }
+  65   1        DS1302_CE = 0;
+  66   1        DS1302_IO = 0;  //读取后的IO必须为0要不会出问题
+  67   1        return Data;
+  68   1      }
+  69          
+  70          void DS1302_SetTime(void)
+  71          {
+  72   1        DS1302_WriteByte(DS1302_WP,0x00);//关闭写保护
+  73   1        DS1302_WriteByte(DS1302_YEAR,DS1302_TIME[0]/10*16+DS1302_TIME[0]%10);
+  74   1        DS1302_WriteByte(DS1302_MONTH,DS1302_TIME[1]/10*16+DS1302_TIME[1]%10);
+  75   1        DS1302_WriteByte(DS1302_DATE,DS1302_TIME[2]/10*16+DS1302_TIME[2]%10);
+  76   1        DS1302_WriteByte(DS1302_HOUR,DS1302_TIME[3]/10*16+DS1302_TIME[3]%10);
+  77   1        DS1302_WriteByte(DS1302_MINUTE,DS1302_TIME[4]/10*16+DS1302_TIME[4]%10);
+  78   1        DS1302_WriteByte(DS1302_SECOND,DS1302_TIME[5]/10*16+DS1302_TIME[5]%10);
+  79   1        DS1302_WriteByte(DS1302_DAY,DS1302_TIME[6]/10*16+DS1302_TIME[6]%10);
+  80   1        DS1302_WriteByte(DS1302_WP,0x80);//打开写保护
+  81   1      }
+  82          
+  83          void DS1302_ReadTime(void)
+  84          {
+  85   1        DS1302_TIME[0] = DS1302_ReadByte(DS1302_YEAR)/16*10 +DS1302_ReadByte(DS1302_YEAR)%16; ;
+  86   1        DS1302_TIME[1] = DS1302_ReadByte(DS1302_MONTH)/16*10 +DS1302_ReadByte(DS1302_MONTH)%16;
+  87   1        DS1302_TIME[2] = DS1302_ReadByte(DS1302_DATE)/16*10 +DS1302_ReadByte(DS1302_DATE)%16;
+  88   1        DS1302_TIME[3] = DS1302_ReadByte(DS1302_HOUR)/16*10 +DS1302_ReadByte(DS1302_HOUR)%16;
+  89   1        DS1302_TIME[4] = DS1302_ReadByte(DS1302_MINUTE)/16*10 +DS1302_ReadByte(DS1302_MINUTE)%16;
+  90   1        DS1302_TIME[5] = DS1302_ReadByte(DS1302_SECOND)/16*10 +DS1302_ReadByte(DS1302_SECOND)%16;
+  91   1        DS1302_TIME[6] = DS1302_ReadByte(DS1302_DAY)/16*10 +DS1302_ReadByte(DS1302_DAY)%16;
+  92   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    150    ----
+   CODE SIZE        =    502    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =   ----       1
+   DATA SIZE        =      7    ----
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
 END OF MODULE INFORMATION.
 
 
-C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

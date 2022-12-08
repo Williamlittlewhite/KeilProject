@@ -2,18 +2,26 @@
 #include "LCD1602.h"
 #include "DS1302.h"
 #include "Delay.h"
-unsigned char second;
+
+
 void main()
 {
 	LCD_Init();
-	LCD_ShowString(1,1,"RTC");
+	//LCD_ShowString(1,1,"RTC");
+	LCD_ShowString(1,1,"  -  -  ");
+	LCD_ShowString(2,1,"  :  :  ");
 	DS1302_Init();
-//	DS1302_WriteByte(0x8E,0x00);//解除芯片写保护
-	DS1302_WriteByte(0x80,0x03);
+	//DS1302_WriteByte(0x8E,0x00);//解除芯片写保护
+	//DS1302_WriteByte(0x80,0x55);
+	DS1302_SetTime();
 	while(1)
 	{
-//		second = DS1302_ReadByte(0x81);
-//		LCD_ShowNum(2,1,second,3);
-//		Delay(50);
+		DS1302_ReadTime();
+		LCD_ShowNum(1,1,DS1302_TIME[0],2);  
+		LCD_ShowNum(1,4,DS1302_TIME[1],2);
+		LCD_ShowNum(1,7,DS1302_TIME[2],2);  
+		LCD_ShowNum(2,1,DS1302_TIME[3],2);  
+		LCD_ShowNum(2,4,DS1302_TIME[4],2);
+		LCD_ShowNum(2,7,DS1302_TIME[5],2);  
 	}
 }
